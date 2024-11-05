@@ -8,3 +8,11 @@ services:
         project: .
         host: containerapp
         language: python
+hooks:
+  predeploy:
+    # Frontend vite builds into ./static/assets
+    - name: Compile Frontend
+      run: |
+        cd frontend
+        npm install
+        npm build
