@@ -24,15 +24,15 @@ param location string
 param principalId string = ''
 
 // Optional parameters
-param resourceGroupName string = 'UUF Solver'
-param openAiAccountName string = ''
-param cosmosDbAccountName string = ''
-param userAssignedIdentityName string = ''
-param appServicePlanName string = ''
-param appServiceWebAppName string = 'UUF Solver'
+var resourceGroupName = 'uuf-solver-${resourceToken}'
+var openAiAccountName = 'ai-${resourceToken}'
+var cosmosDbAccountName = 'db-${resourceToken}'
+var userAssignedIdentityName = 'mi-${resourceToken}'
+var appServicePlanName = 'plan-${resourceToken}'
+var appServiceWebAppName = 'web-app-${resourceToken}'
 
 // serviceName is used as value for the tag (azd-service-name) azd uses to identify deployment host
-param serviceName string = 'web'
+var serviceName = 'web-${resourceToken}'
 
 
 var tags = {
@@ -54,7 +54,7 @@ resource resourceGroup 'Microsoft.Resources/resourceGroups@2022-09-01' = {
 }
 
 module identity 'app/identity.bicep' = {
-  name: 'identity'
+  name: 'identity-${resourceToken}'
   scope: resourceGroup
   params: {
     identityName: !empty(userAssignedIdentityName) ? userAssignedIdentityName : '${abbreviations.userAssignedIdentity}-${resourceToken}'
@@ -64,7 +64,7 @@ module identity 'app/identity.bicep' = {
 }
 
 module ai 'app/ai.bicep' = {
-  name: 'ai'
+  name: 'ai-${resourceToken}'
   scope: resourceGroup
   params: {
     accountName: !empty(openAiAccountName) ? openAiAccountName : '${abbreviations.openAiAccount}-${resourceToken}'
@@ -74,7 +74,7 @@ module ai 'app/ai.bicep' = {
 }
 
 module web 'app/web.bicep' = {
-  name: 'web'
+  name: 'webapp-${resourceToken}'
   scope: resourceGroup
   params: {
     appName: !empty(appServiceWebAppName) ? appServiceWebAppName : '${abbreviations.appServiceWebApp}-${resourceToken}'
@@ -111,7 +111,7 @@ module web 'app/web.bicep' = {
 }
 
 module database 'app/database.bicep' = {
-  name: 'database'
+  name: 'db-${resourceToken}'
   scope: resourceGroup
   params: {
     accountName: !empty(cosmosDbAccountName) ? cosmosDbAccountName : '${abbreviations.cosmosDbAccount}-${resourceToken}'
@@ -134,11 +134,8 @@ module security 'app/security.bicep' = {
 output AZURE_COSMOS_DB_ENDPOINT string = database.outputs.endpoint
 output AZURE_COSMOS_DB_DATABASE_NAME string = database.outputs.database.name
 output AZURE_COSMOS_DB_CHAT_CONTAINER_NAME string = database.outputs.containers[0].name
-output AZURE_COSMOS_DB_CACHE_CONTAINER_NAME string = database.outputs.containers[1].name
-output AZURE_COSMOS_DB_PRODUCT_CONTAINER_NAME string = database.outputs.containers[2].name
 output AZURE_COSMOS_DB_PRODUCT_DATA_SOURCE string = ''
 
 // AI outputs
 output AZURE_OPENAI_ACCOUNT_ENDPOINT string = ai.outputs.endpoint
 output AZURE_OPENAI_COMPLETION_DEPLOYMENT_NAME string = ai.outputs.deployments[0].name
-output AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME string = ai.outputs.deployments[1].name

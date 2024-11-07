@@ -92,11 +92,11 @@ module appServiceWebAppConfig '../core/host/app-service/config.bicep' = {
     parentSiteName: appServiceWebApp.outputs.name
     appSettings: {
 
+      AZURE_OPENAI_MODEL: openAiDeployments[0].name
+      AZURE_OPENAI_MODEL_NAME: openAiDeployments[0].name
       AZURE_OPENAI_RESOURCE: openAiResourceName
       AZURE_OPENAI_STREAM:true
       AZURE_OPENAI_ENDPOINT:openAiAccountEndpoint
-      AZURE_OPENAI_MODEL: openAiDeployments[0].properties.model.name
-      AZURE_OPENAI_MODEL_NAME: openAiDeployments[0].properties.model.name
       AZURE_OPENAI_TEMPERATURE: '0.7'
       AZURE_OPENAI_TOP_P: '0.95'
       AZURE_OPENAI_MAX_TOKENS: '4096'
@@ -111,18 +111,13 @@ module appServiceWebAppConfig '../core/host/app-service/config.bicep' = {
       AZURE_OPENAI_TOOL_CHOICE: ''
       AZURE_OPENAI_SYSTEM_MESSAGE: systemMessage
       AZURE_OPENAI_KEY: 'fc065c5d3e644e7e811933062772ac6f'
-      
       BING_SEARCH_KEY: 'bab3bad7dc564cbeb39c5d4843c5a280'
       BING_ENDPOINT: 'https://api.bing.microsoft.com'
-      
-      
       AZURE_COSMOSDB_ACCOUNT: cosmosDbSettings.account
       AZURE_COSMOSDB_ENDPOINT: databaseAccountEndpoint
       AZURE_COSMOSDB_DATABASE: cosmosDbSettings.database
       AZURE_COSMOSDB_CONVERSATIONS_CONTAINER: cosmosDbSettings.conversationsContainer
       AZURE_COSMOSDB_ENABLE_FEEDBACK: 'true'
-      
-
       UI_TITLE: 'MSLearn UUFSolver'
       UI_LOGO: 'https://www.microsoft.com/favicon.ico?v2'
       UI_CHAT_LOGO: '/ms-learn-guy.png'
@@ -131,9 +126,6 @@ module appServiceWebAppConfig '../core/host/app-service/config.bicep' = {
       UI_FAVICON: 'https://www.microsoft.com/favicon.ico?v2'
       UI_SHOW_SHARE_BUTTON: 'true'
       UI_INFO_URL: 'https://dev.azure.com/UUFSolver/UUFSolver/_dashboards/dashboard/2a606a02-579c-43dc-9880-dcf52cb1e832'
-
-
-
     }
   }
 }

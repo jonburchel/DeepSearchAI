@@ -7,7 +7,7 @@ param tags object = {}
 var deployments = [
   {
     name: 'gpt-4o'
-    skuCapacity: 30
+    skuCapacity: 1
     modelName: 'gpt-4o'
     modelVersion: '2024-05-13'
   }
