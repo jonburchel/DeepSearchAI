@@ -6,10 +6,10 @@ param tags object = {}
 
 var deployments = [
   {
-    name: 'gpt-4o'
+    name: 'gpt-4o-mini'
     skuCapacity: 1
-    modelName: 'gpt-4o'
-    modelVersion: '2024-05-13'
+    modelName: 'gpt-4o-mini'
+    modelVersion: '2024-07-18'
   }
 ]
 
@@ -32,7 +32,7 @@ module openAiModelDeployments '../core/ai/cognitive-services/deployment.bicep' =
     params: {
       name: deployment.name
       parentAccountName: openAiAccount.outputs.name
-      skuName: 'Standard'
+      skuName: 'GlobalStandard'
       skuCapacity: deployment.skuCapacity
       modelName: deployment.modelName
       modelVersion: deployment.modelVersion

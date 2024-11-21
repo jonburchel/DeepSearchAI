@@ -15,6 +15,7 @@ var resourceToken = toLower(uniqueString(subscription().id, environmentName, loc
   'japaneast'
   'uksouth'
   'northeurope'
+  'swedencentral'
   'westus3'
 ])
 @description('Primary location for all resources.')
@@ -48,7 +49,7 @@ var chatSettings = {
 }
 
 resource resourceGroup 'Microsoft.Resources/resourceGroups@2022-09-01' = {
-  name: '${resourceGroupName}-${resourceToken}'
+  name: resourceGroupName
   location: location
   tags: tags
 }
@@ -98,10 +99,10 @@ module web 'app/web.bicep' = {
       cacheSimilarityScore: chatSettings.cacheSimilarityScore
       productMaxResults: chatSettings.productMaxResults
     }
-    userAssignedManagedIdentity: {
-      resourceId: identity.outputs.resourceId
-      clientId: identity.outputs.clientId
-    }
+    // userAssignedManagedIdentity: {
+    //   resourceId: identity.outputs.resourceId
+    //   clientId: identity.outputs.clientId
+    // }
     location: location
     tags: tags
     serviceTag: serviceName
@@ -125,8 +126,42 @@ module security 'app/security.bicep' = {
   scope: resourceGroup
   params: {
     databaseAccountName: database.outputs.accountName
-    appPrincipalId: identity.outputs.principalId
+    appPrincipalId: web.outputs.webappManagedIdentity //identity.outputs.principalId
     userPrincipalId: !empty(principalId) ? principalId : null
+  }
+}
+
+module keyVault 'br/public:avm/res/key-vault/vault:0.10.2' = {
+  name: 'key-vault'
+  scope: resourceGroup
+  params: {
+    name: 'key-vault-${resourceToken}'
+    location: location
+    sku: 'standard'
+    enablePurgeProtection: false
+    enableSoftDelete: false
+    publicNetworkAccess: 'Enabled'
+    enableRbacAuthorization: true
+    secrets: [
+      {
+        name: 'bing-search-key'
+        value: ''
+      }
+    ]
+  }
+}
+var keyVaultRole = subscriptionResourceId(
+  'Microsoft.Authorization/roleDefinitions',
+  '4633458b-17de-408a-b874-0445c86b69e6'
+) // Key Vault Secrets User built-in role
+
+module keyVaultAppAssignment 'br/public:avm/ptn/authorization/resource-role-assignment:0.1.1' = {
+  scope: resourceGroup
+  name: 'key-vault-role-assignment-secrets-user'
+  params: {
+    principalId: principalId
+    resourceId: keyVault.outputs.resourceId
+    roleDefinitionId: keyVaultRole
   }
 }
 
@@ -139,3 +174,6 @@ output AZURE_COSMOS_DB_PRODUCT_DATA_SOURCE string = ''
 // AI outputs
 output AZURE_OPENAI_ACCOUNT_ENDPOINT string = ai.outputs.endpoint
 output AZURE_OPENAI_COMPLETION_DEPLOYMENT_NAME string = ai.outputs.deployments[0].name
+
+// web outputs
+output AZURE_UUF_WEB string = web.outputs.endpoint
