@@ -146,6 +146,14 @@ Note: settings starting with `AZURE_SEARCH` are only needed when using Azure Ope
     python -m uvicorn app:app  --port 50505 --reload
     ```
 
+## Run the sample in a docker container
+
+1. Login to Azure with Azure CLI: `azd auth login --tenant-id 888d76fa-54b2-4ced-8ee5-aac1585adee7`
+1. Build the Dockerfile: right-click on the Dockerfile in Visual Studio Code and select "Build Image".
+1. Name the image `deepsearchai:latest`.
+. Make sure `.env` is at root of the repo. 
+1. Run the image locally at the root of the repo: `docker run -v ~/.azure:/root/.azure --env-file .env -p 50505:50505 deepsearchai:latest3`
+
 ## Use UUF solver
 
 Use the following prompt in the chat window to test UUF solver:
