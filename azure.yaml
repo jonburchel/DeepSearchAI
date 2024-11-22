@@ -1,0 +1,18 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
+
+name: DeepSearchAI
+metadata:
+    template: azd-init@1.10.1
+services:
+    DeepSearchAI:
+        project: .
+        host: containerapp
+        language: python
+hooks:
+  predeploy:
+    # Frontend vite builds into ./static/assets
+    - name: Compile Frontend
+      run: |
+        cd frontend
+        npm install
+        npm build
