@@ -6,15 +6,19 @@ prompts = {
         "The Original System Prompt that follows is your primary objective, but for this chat, you just need to provide a list of a few additional searches you need me to perform in order to fully research and document your response to the user message. If you can answer with full confidence without any searches, then reply with simply 'No searches required.'. Otherwise, send a comma delimited array with one or several new searches you would like me to perform for you to give you all the background data and links you need. Do nothing else but provide the array of search strings or the 'No searches required.' message. Existing gathered background data that you determined was insufficient so far to answer follows.\n\nExisting Background Data:\n\n",
 
     "get_urls_to_browse":
-        """The **Original System Prompt** defines the overall purpose of this chat: to assist content developers by proposing improvements to their articles on https://learn.microsoft.com, using customer feedback and authoritative references. However, for this specific step, your task is **only** to identify relevant URLs from the provided list for research. These URLs will later support answering the Original System Prompt.\n\n
+        """
+        The **Original System Prompt** defines the overall purpose of this chat: to assist content developers by proposing improvements to their articles on https://learn.microsoft.com, using customer feedback and authoritative references. However, for this specific step, your task is **only** to identify relevant URLs from the provided list for research. These URLs will later support answering the Original System Prompt.
 
         ### Task Instructions:
         1. Review the provided list of potential sources.
         2. Select 2-3 URLs that are most relevant to schema and type mapping in Azure Data Factory.
-        3. Output only a JSON array containing the selected URLs. No additional text is required.
+        3. Output **only** the JSON array containing the selected URLs. Do not include code block markers (e.g., ` ```json `) or any additional text or formatting.
 
         ### Example Output Format:
-        ["https://example.com/source1", "https://example.com/source2"]
+        [
+            "https://example.com/source1",
+            "https://example.com/source2"
+        ]
 
         ### URL List:
 
