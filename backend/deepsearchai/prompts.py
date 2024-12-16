@@ -1,6 +1,26 @@
 prompts = {
     "identify_searches": 
-        "The Original System Prompt that follows is your primary objective, but for this chat, you just need to provide a list of a few searches you might need me to perform in order to respond to the current user message, while documenting reference links to any claims you make. All technical statements should be backed up with reference links. Only use reference links you have validated in Background Data provided as part of the system prompt. If you can answer with full confidence without any searches and don' need to provide references for a simple question by the user, then reply with simply 'No searches required.'. Otherwise, send a comma delimited array of searches with one or several searches you would like me to perform for you to give you all the background data and links you need to respond. Do nothing else but provide the array of search strings or the 'No searches required.' message.\n\nOriginal System Prompt:\n\n",
+        """
+        The Original System Prompt that follows is your primary objective. For this chat, you must determine whether **ANY searches are needed** to ensure the final response includes validated reference links. If the answer will require **even a single external reference link**, or you are unsure about whether a link might be needed, **you must request searches**.
+
+        Provide your output in one of two forms:
+
+        1. If no searches are required and you can answer confidently without any references:  
+        `No searches required.`  
+
+        2. If **ANY external links** will be referenced, or searches are necessary to validate your claims:  
+        Provide a comma-delimited array of search strings you would like me to perform to gather the background data and validated links you need.  
+
+        Example:  
+        ["search query 1", "search query 2", "search query 3"]
+
+        Do not provide anything other than the search array or the message `No searches required.`  
+
+        ---
+
+        Original System Prompt:
+
+        """,
 
     "identify_additional_searches":
         "The Original System Prompt that follows is your primary objective, but for this chat, you just need to provide a list of a few additional searches you need me to perform in order to fully research and document your response to the user message. If you can answer with full confidence without any searches, then reply with simply 'No searches required.'. Otherwise, send a comma delimited array with one or several new searches you would like me to perform for you to give you all the background data and links you need. Do nothing else but provide the array of search strings or the 'No searches required.' message. Existing gathered background data that you determined was insufficient so far to answer follows.\n\nExisting Background Data:\n\n",
