@@ -136,7 +136,7 @@ async def identify_searches(request_body, request_headers, Summaries = None):
         if Summaries is None:
             system_preamble = prompts["identify_searches"];
         else:
-            system_preamble = prompts["identify_additional_searches"] + json.dumps(Summaries, indent=4) + "\n\nOriginal System Prompt:\n"
+            system_preamble = prompts["identify_additional_searches"] + json.dumps(Summaries, indent=4) + "\n\nOriginal System Prompt:\n\n"
         
         searches = await send_private_chat(request_body, request_headers, system_preamble)
 
@@ -157,9 +157,9 @@ async def get_urls_to_browse(request_body, request_headers, searches):
             return "Search error."
         else:
             strsearchresults = json.dumps(searchresults, indent=4)
-            system_preamble = prompts["get_urls_to_browse"] + strsearchresults + "\n\nOriginal System Prompt:\n"
+            system_preamble = prompts["get_urls_to_browse"] + strsearchresults + "\n\nOriginal System Prompt:\n\n"
                         
-            URLsToBrowse = await send_private_chat(request_body, request_headers, None, system_preamble)
+            URLsToBrowse = await send_private_chat(request_body, request_headers, system_preamble)
             return URLsToBrowse
 
 async def fetch_and_parse_url(url):
