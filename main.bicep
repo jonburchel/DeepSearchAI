@@ -18,15 +18,15 @@ var tags = {
 }
 
 #disable-next-line BCP081
-resource bingSearch 'Microsoft.Bing/accounts@2020-06-10' = {
-  name: 'UUFSolver-Web-Search-${resourceToken}'
-  location: 'global'
-  tags: tags
-  kind: 'Bing.Search.v7'
-  sku: {
-    name: 'S1'
-  }
-}
+// resource bingSearch 'Microsoft.Bing/accounts@2020-06-10' = {
+//   name: 'UUFSolver-Web-Search-${resourceToken}'
+//   location: 'global'
+//   tags: tags
+//   kind: 'Bing.Search.v7'
+//   sku: {
+//     name: 'S1'
+//   }
+// }
 
 // App Service Plan module
 module appServicePlan 'br/public:avm/res/web/serverfarm:0.4.1' = {
@@ -34,7 +34,7 @@ module appServicePlan 'br/public:avm/res/web/serverfarm:0.4.1' = {
   params: {
     name: 'asp-UUF-Solver-${resourceToken}'
     location: location
-    skuName: 'P1V2'
+    skuName: 'B2'
     skuCapacity: 1
   }
 }
@@ -74,17 +74,17 @@ resource databaseAccount 'Microsoft.DocumentDB/databaseAccounts@2021-04-15' = {
 }
 
 // Bing Resource module (use a custom or official module for Bing if available)
-resource bingResource 'Microsoft.CognitiveServices/accounts@2022-12-01' = {
-  name: 'BingSearch-${resourceToken}'
-  location: location
-  sku: {
-    name: 'S1'
-  }
-  kind: 'Bing.Search'
-  properties: {
-    apiProperties: {}
-  }
-}
+// resource bingResource 'Microsoft.CognitiveServices/accounts@2022-12-01' = {
+//   name: 'BingSearch-${resourceToken}'
+//   location: location
+//   sku: {
+//     name: 'S1'
+//   }
+//   kind: 'Bing.Search'
+//   properties: {
+//     apiProperties: {}
+//   }
+// }
 
 // Managed Identity resource
 resource userManagedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
