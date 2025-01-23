@@ -7,26 +7,22 @@ param environmentName string
 @description('Managed Identity name')
 param identityName string = 'UUF-Solver-my-identity'
 
-@description('Azure OpenAI name')
-param openAiResourceName string = 'DeepSearchTest'
-
 @description('Resource token for naming consistency')
 var resourceToken = toLower(uniqueString(resourceGroup().id, environmentName, location))
 
-var tags = {
-  'azd-env-name': environmentName
-}
 
-#disable-next-line BCP081
-// resource bingSearch 'Microsoft.Bing/accounts@2020-06-10' = {
-//   name: 'UUFSolver-Web-Search-${resourceToken}'
-//   location: 'global'
-//   tags: tags
-//   kind: 'Bing.Search.v7'
-//   sku: {
-//     name: 'S1'
-//   }
-// }
+// Microsoft has disabled new Bing Search resources
+// needs eastus2 region
+resource searchService 'Microsoft.Search/searchServices@2023-11-01' = {
+  name: 'mysearch-${resourceToken}'
+  location: location
+  sku: {
+    name: 'basic'
+  }
+  properties: {
+    hostingMode: 'default'
+  }
+}
 
 // App Service Plan module
 module appServicePlan 'br/public:avm/res/web/serverfarm:0.4.1' = {
@@ -55,37 +51,6 @@ module appServiceWebApp 'br/public:avm/res/web/site:0.13.0' = {
   }
 }
 
-
-// Cosmos DB module
-resource databaseAccount 'Microsoft.DocumentDB/databaseAccounts@2021-04-15' = {
-  name: 'kv-ref'
-  location: location
-  kind: 'GlobalDocumentDB'
-  properties: {
-    databaseAccountOfferType: 'Standard'
-    locations: [
-      {
-        locationName: location
-        failoverPriority: 0
-        isZoneRedundant: false
-      }
-    ]
-  }
-}
-
-// Bing Resource module (use a custom or official module for Bing if available)
-// resource bingResource 'Microsoft.CognitiveServices/accounts@2022-12-01' = {
-//   name: 'BingSearch-${resourceToken}'
-//   location: location
-//   sku: {
-//     name: 'S1'
-//   }
-//   kind: 'Bing.Search'
-//   properties: {
-//     apiProperties: {}
-//   }
-// }
-
 // Managed Identity resource
 resource userManagedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
   name: identityName
@@ -94,13 +59,13 @@ resource userManagedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2
 
 // Azure OpenAI resource (assuming it’s supported in your region)
 resource openAi 'Microsoft.CognitiveServices/accounts@2022-12-01' = {
-  name: 'DeepSearchTest-${resourceToken}'
+  name: 'DeepSearchUUF-${resourceToken}'
   location: location
   sku: {
     name: 'S0'
   }
   kind: 'OpenAI'
   properties: {
-    customSubDomainName: openAiResourceName
+    customSubDomainName: 'openAiResource-${resourceToken}'
   }
 }
