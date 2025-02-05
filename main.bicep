@@ -1,3 +1,5 @@
+// filepath: /Code/DeepSearchAI/main.bicep
+
 @description('Location for the resources')
 param location string = resourceGroup().location
 
@@ -7,12 +9,14 @@ param environmentName string
 @description('Managed Identity name')
 param identityName string = 'UUF-Solver-my-identity'
 
+// Contributor role definition ID
+var contributorRoleDefinitionId = 'b24988ac-6180-42a0-ab88-20f7382dd24c'
+var searchDataReaderId = '7d2a6a18-3955-47a6-bbf0-81279f583a02'
+
 @description('Resource token for naming consistency')
 var resourceToken = toLower(uniqueString(resourceGroup().id, environmentName, location))
 
-
-// Microsoft has disabled new Bing Search resources
-// needs eastus2 region
+// Azure Cognitive Search
 resource searchService 'Microsoft.Search/searchServices@2023-11-01' = {
   name: 'mysearch-${resourceToken}'
   location: location
@@ -27,6 +31,7 @@ resource searchService 'Microsoft.Search/searchServices@2023-11-01' = {
 // App Service Plan module
 module appServicePlan 'br/public:avm/res/web/serverfarm:0.4.1' = {
   name: 'appServicePlanDeploy'
+  scope: resourceGroup()
   params: {
     name: 'asp-UUF-Solver-${resourceToken}'
     location: location
@@ -44,10 +49,11 @@ module appServiceWebApp 'br/public:avm/res/web/site:0.13.0' = {
     location: location
     serverFarmResourceId: appServicePlan.outputs.resourceId
     kind: 'app'
-    // appSettings: [
-    //   { name: 'ENV_VAR'; value: 'SomeValue' }
-    //   // Add more settings as needed
-    // ]
+    managedIdentities: {
+      userAssignedResourceIds: [
+        userManagedIdentity.id
+      ]
+    }
   }
 }
 
@@ -57,7 +63,18 @@ resource userManagedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2
   location: location
 }
 
-// Azure OpenAI resource (assuming it’s supported in your region)
+// Assign Search Data Reader role to the identity, scoped to the Cognitive Search resource
+resource searchDataReaderAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(searchService.id, userManagedIdentity.name, searchDataReaderId)
+  scope: searchService
+  properties: {
+    roleDefinitionId: resourceId('Microsoft.Authorization/roleDefinitions', searchDataReaderId)
+    principalId: userManagedIdentity.properties.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+// Azure OpenAI resource
 resource openAi 'Microsoft.CognitiveServices/accounts@2022-12-01' = {
   name: 'DeepSearchUUF-${resourceToken}'
   location: location
@@ -66,6 +83,23 @@ resource openAi 'Microsoft.CognitiveServices/accounts@2022-12-01' = {
   }
   kind: 'OpenAI'
   properties: {
-    customSubDomainName: 'openAiResource-${resourceToken}'
+    // ...any required properties for your OpenAI resource
+  }
+  identity: {
+    type: 'UserAssigned'
+    userAssignedIdentities: {
+      '${userManagedIdentity.id}': {}
+    }
+  }
+}
+
+// Role Assignment for Contributor on the App Service
+resource contributorAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(appServiceWebApp.name, userManagedIdentity.name, contributorRoleDefinitionId)
+  scope: resourceGroup()
+  properties: {
+    roleDefinitionId: resourceId('Microsoft.Authorization/roleDefinitions', contributorRoleDefinitionId)
+    principalId: userManagedIdentity.properties.principalId
+    principalType: 'ServicePrincipal'
   }
 }
