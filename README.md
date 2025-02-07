@@ -177,3 +177,39 @@ Live URL
 https://aka.ms/uufsolver/?Article=https://learn.microsoft.com/en-us/azure/data-factory/connector-sap-change-data-capture&Customer%20Feedback=Not%20alot%20of%20information%20regarding%20the%20override%20of%20checkpoint%20key.%20Little%20more%20information%20about%20the%20actual%20implementation%20of%20a%20parameterized%20checkpoint%20key%20for%20the%20different%20sources%20would%20be%20nice
 ```
 
+## Run Bicep deployment script
+
+The Bicep deployment script creates multiple resources in an environment you configure. It's designed to be used to quickly spin up test environments. To run the deployment:
+
+1. From the root directory of your code repo, log in to azure with `az login`.
+
+1. Create a new resource group for your deployment. Replace the values my-subscription and rg-name.
+
+    ```azurecli
+    az group create \
+      --subscription my-subscription \
+      --name rg-name. \
+      --location eastus2 #replace with closest region
+    ```
+
+3. Run a test deployment what if scenario to identify problems. Set the deployment environment to `Test`. Fix any identified issues.
+
+    ```azcli
+    az deployment group what-if \
+      --name myDeployment \
+      --resource-group rg-name \
+      --template-file main.bicep \
+      --parameters location=eastus2
+    ```
+
+4. Run the real deployment. Set the deployment environment to `Test`.
+
+    ```azcli
+        az deployment group create \
+          --name myDeployment \
+          --resource-group rg-name  \
+          --template-file main.bicep \
+          --parameters location=eastus2
+    ```
+
+5. Go to the Azure portal to verify that the created resources are there.
