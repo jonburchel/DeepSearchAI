@@ -188,7 +188,7 @@ The Bicep deployment script creates multiple resources in an environment you con
     ```azurecli
     az group create \
       --subscription my-subscription \
-      --name rg-name. \
+      --name rg-name \
       --location eastus2 #replace with closest region
     ```
 

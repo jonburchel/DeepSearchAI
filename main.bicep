@@ -75,7 +75,7 @@ resource searchDataReaderAssignment 'Microsoft.Authorization/roleAssignments@202
 }
 
 // Azure OpenAI resource
-resource openAi 'Microsoft.CognitiveServices/accounts@2022-12-01' = {
+resource openAi 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
   name: 'DeepSearchUUF-${resourceToken}'
   location: location
   sku: {
