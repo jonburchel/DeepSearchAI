@@ -93,6 +93,22 @@ resource openAi 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
   }
 }
 
+// // Model Deployment Resource
+// resource openAiDeployment 'Microsoft.CognitiveServices/accounts/deployments@2022-12-01' = {
+//   parent: openAi
+//   name: 'gpt-4o-mini-deployment'
+//   properties: {
+//     model: {
+//       name: 'gpt-4o-mini' // Ensure this is a valid model name in your Azure OpenAI service
+//       format: 'OpenAI'
+//     }
+//     scaleSettings: {
+//       scaleType: 'Manual' // Adjust as needed; 'Manual' may not be supported for some models
+//       capacity: 3
+//     }
+//   }
+// }
+
 // Role Assignment for Contributor on the App Service
 resource contributorAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid(appServiceWebApp.name, userManagedIdentity.name, contributorRoleDefinitionId)
