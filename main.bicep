@@ -1,126 +1,121 @@
-targetScope = 'subscription'
+// filepath: /Code/DeepSearchAI/main.bicep
 
+@description('Location for the resources')
+param location string = resourceGroup().location
+
+@description('Name of the environment that can be used as part of naming resource convention.')
 param environmentName string
-param location string = 'eastus'
-param tenantId string = tenant().tenantId
-param bingSearchKey string
 
-var abbrs = loadJsonContent('abbreviations.json')
-var resourceToken = toLower(uniqueString(subscription().id, environmentName, location))
-var tags = { 'azd-env-name': environmentName }
+@description('Managed Identity name')
+param identityName string = 'UUF-Solver-my-identity'
 
-resource resourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' = {
-  name: '${abbrs.resourcesResourceGroups}${environmentName}'
+// Contributor role definition ID
+var contributorRoleDefinitionId = 'b24988ac-6180-42a0-ab88-20f7382dd24c'
+var searchDataReaderId = '1407120a-92aa-4202-b7e9-c0e197c71c8f'
+
+@description('Resource token for naming consistency')
+var resourceToken = toLower(uniqueString(resourceGroup().id, environmentName, location))
+
+// Azure Cognitive Search
+resource searchService 'Microsoft.Search/searchServices@2023-11-01' = {
+  name: 'mysearch-${resourceToken}'
   location: location
-  tags: tags
+  sku: {
+    name: 'basic'
+  }
+  properties: {
+    hostingMode: 'default'
+  }
 }
 
-module appServicePlan 'core/host/appserviceplan.bicep' = {
-  name: 'appserviceplan'
-  scope: resourceGroup
+// App Service Plan module
+module appServicePlan 'br/public:avm/res/web/serverfarm:0.4.1' = {
+  name: 'appServicePlanDeploy'
+  scope: resourceGroup()
   params: {
-    name: '${abbrs.webServerFarms}${resourceToken}'
+    name: 'asp-UUF-Solver-${resourceToken}'
     location: location
-    tags: tags
-    sku: {
-      name: 'Basic'
-      capacity: 1
-    }
-    kind: 'linux'
+    skuName: 'B2'
+    skuCapacity: 1
   }
 }
 
-var appEnvVariables = {
-  AZURE_COSMOSDB_ACCOUNT: ''
-  AZURE_COSMOSDB_CONVERSATIONS_CONTAINER:  ''
-  AZURE_COSMOSDB_DATABASE: ''
-  AZURE_COSMOSDB_ENABLE_FEEDBACK: ''
-  AZURE_OPENAI_ENDPOINT: ''
-  AZURE_OPENAI_MAX_TOKENS: 4096
-  AZURE_OPENAI_MODEL: 'gpt-4o-mini'
-  AZURE_OPENAI_MODEL_NAME: 'gpt-4o-mini'
-  AZURE_OPENAI_RESOURCE: ''
-  AZURE_OPENAI_STOP_SEQUENCE: ''
-  AZURE_OPENAI_SYSTEM_MESSAGE: ''
-  AZURE_OPENAI_TEMPERATURE: '0.7'
-  BING_ENDPOINT: 'https://api.bing.microsoft.com'
-  BING_SEARCH_KEY: bingSearchKey
-  SCM_DO_BUILD_DURING_DEPLOYMENT: true
-  UI_CHAT_DESCRIPTION: '<p style="margin-left: 8px;">UUFSolver helps you resolve your Unified User Feedback issues! Just paste details of your UUF issue into the chat and UUFSolver researches and suggests how to resolve it. You can ask follow up questions, too.<br/><br><center><table><tr><td><center><u><b>IMPORTANT:</b></u> When you use the tool, be sure to:</center><br/>• Validate the ground truth of any answer before using it in your work.<br/>• Add the <b>used-uuf-solver</b> tag to the UUF item in Azure DevOps.</br>• Add the <b>ai-usage: ai-assisted</b> tag to the article metadata.</td><tr></table></center></p>'
-  UI_CHAT_LOGO: './ms-learn-guy.png'
-  UI_CHAT_TITLE: 'UUFSolver'
-  UI_FAVICON: './ms-learn-guy.png'
-  UI_INFO_URL: 'https://dev.azure.com/UUFSolver/UUFSolver/_dashboards/dashboard/2a606a02-579c-43dc-9880-dcf52cb1e832'
-  UI_LOGO: 'https://www.microsoft.com/favicon.ico?v2'
-  UI_SEARCH_TEXT: 'Paste in the description field from a UUF item. Title and verbatim are mandatory, the rest of the fields are optional.'
-  UI_SHOW_CHAT_HISTORY_BUTTON: true
-  UI_SHOW_SHARE_BUTTON: true
-  UI_TITLE: 'MSLearn UUFSolver'
-  WEBSITE_AUTH_AAD_ALLOWED_TENANTS: '888d76fa-54b2-4ced-8ee5-aac1585adee7'
-}
-
-
-module backend 'core/host/appservice.bicep' = {
-  name: 'web'
-  scope: resourceGroup
+// Web App module
+module appServiceWebApp 'br/public:avm/res/web/site:0.13.0' = {
+  name: 'UUF-Solver'
+  scope: resourceGroup()
   params: {
-    name: '${abbrs.webSitesAppService}backend-${resourceToken}'
+    name: 'UUF-Solver-${resourceToken}'
     location: location
-    tags: union(tags, { 'azd-service-name': 'backend' })
-    // Need to check deploymentTarget again due to https://github.com/Azure/bicep/issues/3990
-    appServicePlanId: appServicePlan.outputs.id
-    runtimeName: 'python'
-    runtimeVersion: '3.11'
-    appCommandLine: 'python3 -m gunicorn main:app'
-    scmDoBuildDuringDeployment: true
-    managedIdentity: true
-    enableUnauthenticatedAccess: true
-    disableAppServicesAuthentication: false
-    clientSecretSettingName: ''
-    appSettings: appEnvVariables
-  }
-}
-module openAi 'br/public:avm/res/cognitive-services/account:0.7.2' = if (isAzureOpenAiHost && deployAzureOpenAi) {
-  name: 'openai'
-  scope: openAiResourceGroup
-  params: {
-    name: !empty(openAiServiceName) ? openAiServiceName : '${abbrs.cognitiveServicesAccounts}${resourceToken}'
-    location: openAiResourceGroupLocation
-    tags: tags
-    kind: 'OpenAI'
-    customSubDomainName: !empty(openAiServiceName)
-      ? openAiServiceName
-      : '${abbrs.cognitiveServicesAccounts}${resourceToken}'
-    publicNetworkAccess: publicNetworkAccess
-    networkAcls: {
-      defaultAction: 'Allow'
-      bypass: bypass
+    serverFarmResourceId: appServicePlan.outputs.resourceId
+    kind: 'app'
+    managedIdentities: {
+      userAssignedResourceIds: [
+        userManagedIdentity.id
+      ]
     }
-    sku: openAiSkuName
-    deployments: openAiDeployments
-    disableLocalAuth: true
-  }
-}
-/*
-module openAiRoleUser 'core/security/role.bicep' = if (isAzureOpenAiHost && deployAzureOpenAi) {
-  scope: openAiResourceGroup
-  name: 'openai-role-user'
-  params: {
-    principalId: principalId
-    roleDefinitionId: '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'
-    principalType: principalType
   }
 }
 
-module openAiRoleBackend 'core/security/role.bicep' = if (isAzureOpenAiHost && deployAzureOpenAi) {
-  scope: openAiResourceGroup
-  name: 'openai-role-backend'
-  params: {
-    principalId: (deploymentTarget == 'appservice')
-      ? backend.outputs.identityPrincipalId
-      : acaBackend.outputs.identityPrincipalId
-    roleDefinitionId: '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'
+// Managed Identity resource
+resource userManagedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
+  name: identityName
+  location: location
+}
+
+// Assign Search Data Reader role to the identity, scoped to the Cognitive Search resource
+resource searchDataReaderAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(searchService.id, userManagedIdentity.name, searchDataReaderId)
+  scope: searchService
+  properties: {
+    roleDefinitionId: resourceId('Microsoft.Authorization/roleDefinitions', searchDataReaderId)
+    principalId: userManagedIdentity.properties.principalId
     principalType: 'ServicePrincipal'
   }
 }
-*/
+
+// Azure OpenAI resource
+resource openAi 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
+  name: 'DeepSearchUUF-${resourceToken}'
+  location: location
+  sku: {
+    name: 'S0'
+  }
+  kind: 'OpenAI'
+  properties: {
+    // ...any required properties for your OpenAI resource
+  }
+  identity: {
+    type: 'UserAssigned'
+    userAssignedIdentities: {
+      '${userManagedIdentity.id}': {}
+    }
+  }
+}
+
+// // Model Deployment Resource
+// resource openAiDeployment 'Microsoft.CognitiveServices/accounts/deployments@2022-12-01' = {
+//   parent: openAi
+//   name: 'gpt-4o-mini-deployment'
+//   properties: {
+//     model: {
+//       name: 'gpt-4o-mini' // Ensure this is a valid model name in your Azure OpenAI service
+//       format: 'OpenAI'
+//     }
+//     scaleSettings: {
+//       scaleType: 'Manual' // Adjust as needed; 'Manual' may not be supported for some models
+//       capacity: 3
+//     }
+//   }
+// }
+
+// Role Assignment for Contributor on the App Service
+resource contributorAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(appServiceWebApp.name, userManagedIdentity.name, contributorRoleDefinitionId)
+  scope: resourceGroup()
+  properties: {
+    roleDefinitionId: resourceId('Microsoft.Authorization/roleDefinitions', contributorRoleDefinitionId)
+    principalId: userManagedIdentity.properties.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
